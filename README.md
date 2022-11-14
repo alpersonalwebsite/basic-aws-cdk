@@ -71,6 +71,13 @@ More concepts:
 1. L2 construct
 1. L3: combination of L1 and L2
 
+### Some useful commands
+
+* `cdk diff` is going to compare what changes we have between our local environment and what we have deployed
+* `cdk synth` synthesizes de CFN template
+* `cdk deploy`
+* `cdk deploy --hotswap` deploys just what we changed
+
 ## Examples
 
 ### Hello World Lambda
@@ -208,4 +215,99 @@ REPORT RequestId: c9004084-9f1e-4487-a4bb-b1f9bf6d7f29	Duration: 2.33 ms	Billed 
 
 Request ID
 c9004084-9f1e-4487-a4bb-b1f9bf6d7f29
+```
+
+### Working with environment variables and outputs
+
+#### Environment variables
+We are going to use the previous example
+
+##### Adding the environment variables
+projects/first_project/lib/first_project-stack.ts
+
+```ts
+import { join } from 'path';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+
+export class FirstProjectStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    // We use this to define that the resource is going to be part of the stack FirstProjectStack
+    const handler = new NodejsFunction(this, 'Hello World', {
+      runtime: Runtime.NODEJS_16_X,
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(5),
+      handler: 'helloWorld',
+      // code: Code.fromAsset(join(__dirname, '../lambda'))
+      entry: join(__dirname, `/../lambda/app.ts`),
+      environment: {
+        NAME: 'Peter'
+      }
+    });
+  }
+}
+```
+
+##### Accessing the environment variables
+projects/first_project/lambda/app.ts
+
+```ts
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+
+export async function helloWorld(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+
+  const name = process.env.NAME;
+
+  return {
+    body: JSON.stringify({message: `Hello World, ${name}`}),
+    statusCode: 200
+  }
+}
+```
+
+#### Outputs
+projects/first_project/lib/first_project-stack.ts
+
+```ts
+import { join } from 'path';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { CfnOutput } from 'aws-cdk-lib';
+
+export class FirstProjectStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    // We use this to define that the resource is going to be part of the stack FirstProjectStack
+    const handler = new NodejsFunction(this, 'Hello World', {
+      runtime: Runtime.NODEJS_16_X,
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(5),
+      handler: 'helloWorld',
+      // code: Code.fromAsset(join(__dirname, '../lambda'))
+      entry: join(__dirname, `/../lambda/app.ts`),
+      environment: {
+        NAME: 'Peter'
+      }
+    });
+
+    new CfnOutput(this, 'Lambda ARN', {
+      value: handler.functionArn
+    })
+
+  }
+}
+```
+
+After deploying (cdk deploy) you will see something like this:
+
+```
+Outputs:
+FirstProjectStack.LambdaARN = arn:aws:lambda:us-west-1:ACCOUNT_ID:function:FirstProjectStack-HelloWorld7BCF4C30-qoGBFllWIum4
 ```
