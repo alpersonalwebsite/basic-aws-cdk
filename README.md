@@ -165,10 +165,40 @@ stack.
 * `cdk deploy` deploys it
 * `cdk destroy` deletes the stack
 * `cdk deploy --hotswap` updates supported resources **directly, bypassing CloudFormation
-  change sets**, falling back to a normal deployment when it cannot. It covers Lambda
-  functions, Step Functions state machines and ECS container images, and it **implies
-  `--no-rollback`**. AWS is explicit: *"Hot-swapping is not recommended for production
-  deployments."* Same caveat for `cdk watch`, which uses `--hotswap` by default.
+  change sets**. Read the next section before using it: it does **not** fall back to a normal
+  deployment.
+* `cdk deploy --hotswap-fallback` does the same but falls back when hot swapping is not
+  possible.
+
+### On `--hotswap`, and why the AWS docs disagree with the CLI
+
+Taking the pinned CLI's own help as the authority, since it is what you run:
+
+> `--hotswap` Attempts to perform a 'hotswap' deployment, but **does not fall back to a full
+> deployment if that is not possible. Instead, changes to any non-hotswappable properties are
+> ignored.** Do not use this in production environments
+
+> `--hotswap-fallback` Attempts to perform a 'hotswap' deployment, which skips CloudFormation
+> and updates the resources directly, and **falls back to a full deployment** if that is not
+> possible. Do not use this in production environments
+
+So the flag to reach for is almost always `--hotswap-fallback`. Plain `--hotswap` **silently
+ignores** anything it cannot hot swap, which means a change to a non-hotswappable property
+appears to deploy and does not, and that is the failure mode worth knowing about.
+
+`cdk watch` **implies `--hotswap`** per the same help, so it inherits that behaviour. Use
+`--no-hotswap` with it for full deployments.
+
+⚠️ **AWS's own CLI reference page contradicts this**, and an earlier version of these notes
+repeated it. That page still says *"Deployment falls back to AWS CloudFormation deployment if
+hot swapping is not possible"* and *"The `--hotswap` flag also disables rollback (i.e., implies
+`--no-rollback`)"*. Neither matches the CLI pinned here: the fallback is a separate flag, and
+the help contains no relationship between hotswap and rollback at all. The page describes the
+behaviour from before the flag was split in two. It also lists three supported resource types
+where the current deploy documentation lists many more, so treat the list as a floor.
+
+When the documentation and the tool disagree, the tool wins, and `cdk deploy --help` settles it
+in one command.
 
 ## The example: a Hello World Lambda
 
@@ -368,8 +398,11 @@ Verified against AWS's own documentation and by running the project, not from me
   L2` is not what an L3 is. All three now carry AWS's own definitions.
 - **`Runtime.NODEJS_16_X`** is deprecated, with the dates above.
 - **`cdk deploy --hotswap`** was described as "deploys just what we changed", which omits that
-  it bypasses CloudFormation change sets, implies `--no-rollback`, covers only three resource
-  types, and is not recommended for production.
+  it bypasses CloudFormation change sets and, more importantly, that it does **not** fall back
+  to a normal deployment: non-hotswappable changes are silently ignored. `--hotswap-fallback`
+  is the variant that falls back. This section was itself corrected after review: it first
+  repeated AWS's CLI reference page, which still describes the pre-split behaviour and claims
+  the flag implies `--no-rollback`. The pinned CLI's help says otherwise, and it is what runs.
 - **There was no clean-up section**, for a walkthrough that bootstraps an account and deploys a
   function.
 - **There was no `.gitignore`**, while the walkthrough tells you to create a CDK app inside this

@@ -30,6 +30,16 @@ describe('FirstProjectStack', () => {
       Runtime: 'nodejs22.x',
     });
     // The specific regression this guards: nodejs16.x was deprecated 2024-06-12.
+    //
+    // This denylist is hardcoded, and deliberately, because there is no CDK-native
+    // alternative: Runtime exposes name, family, supportsInlineCode, supportsSnapStart and a
+    // few others, but NOT a deprecation flag. Verified against aws-cdk-lib 2.264.0 that
+    // Runtime.NODEJS_16_X.isDeprecated and Runtime.NODEJS_22_X.isDeprecated are both
+    // `undefined`, so a generic "assert the runtime is supported" test cannot be written.
+    //
+    // Consequence to plan for: this list needs editing when Node 22 is deprecated, currently
+    // forecast for 2027-04-30. The AWS runtimes table is the source:
+    // https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
     const functions = template.findResources('AWS::Lambda::Function');
     const runtimes = Object.values(functions).map((f) => f.Properties?.Runtime);
     expect(runtimes).not.toContain('nodejs16.x');
