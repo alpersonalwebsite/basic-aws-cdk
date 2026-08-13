@@ -8,10 +8,18 @@ cdk.out/
 *.d.ts
 !lambda/*.d.ts
 
-# Cached context lookups. cdk.context.json records the answers to environment queries: AWS
-# account ids, availability zones, AMI ids, hosted zone ids. It is the file most likely to
-# put an account number into a public repository by accident.
-cdk.context.json
+# cdk.context.json is deliberately NOT ignored. AWS is explicit that it must be tracked:
+# "Because they're part of your application's state, cdk.json and cdk.context.json must be
+# committed to source control along with the rest of your app's source code. Otherwise,
+# deployments in other environments (for example, a CI pipeline) might produce inconsistent
+# results." It caches the answers to environment queries, which is what freezes an AMI id or
+# an availability-zone list so synthesis stays deterministic.
+#
+# Worth knowing before you commit one: its KEYS embed the account id, for example
+# availability-zones:account=123456789012:region=eu-central-1. So in a public repository,
+# read the file before committing it. This project generates none, because it performs no
+# context lookups.
+# https://docs.aws.amazon.com/cdk/v2/guide/context.html
 
 # Compiled output. A TypeScript CDK project emits .js and .d.ts beside every .ts source, so
 # without this the repository fills with build artifacts that shadow the real sources.

@@ -1,6 +1,6 @@
 # Basic AWS CDK (Cloud Development Kit)
 
-Or how to provision AWS resources using well known programming languages.
+Or how to provision AWS resources using well-known programming languages.
 
 Notes from November 2022, corrected and completed. There is a working project in
 [`projects/first_project`](projects/first_project) that the walkthrough below builds up to, so
@@ -138,9 +138,13 @@ Source: https://docs.aws.amazon.com/cdk/v2/guide/constructs.html
 These three get conflated, and they do quite different things.
 
 **`cdk synth`** runs your app and produces the CloudFormation template, writing the cloud
-assembly to `cdk.out` and printing the template. It needs **no AWS account**. Worth knowing:
-the CLI synthesizes fresh templates before most operations anyway, including `deploy`, so
-`synth` is for *reading* the output rather than a step you must run first.
+assembly to `cdk.out` and printing the template. For **this** app it needs no AWS account, and
+that is a property of the app rather than of `synth`: a stack that performs a context lookup
+(`Vpc.fromLookup`, `HostedZone.fromLookup`, `StringParameter.valueFromLookup`,
+`stack.availabilityZones`) **queries your account during synthesis** and caches the answer in
+`cdk.context.json`. Worth knowing: the CLI synthesizes fresh templates before most operations
+anyway, including `deploy`, so `synth` is for *reading* the output rather than a step you must
+run first.
 
 **`cdk bootstrap`** provisions the resources the CDK itself needs in an account and region: an
 S3 bucket for assets such as bundled Lambda code, an ECR repository for container images, and
@@ -331,10 +335,14 @@ FirstProjectStack.LambdaArn = arn:aws:lambda:us-west-1:ACCOUNT_ID:function:First
 From the project root:
 
 ```shell
-cdk bootstrap    # once per account and region; see the note above on cost and permissions
-cdk synth
-cdk deploy
+npx cdk bootstrap    # once per account and region; see the note above on cost and permissions
+npx cdk synth
+npx cdk deploy
 ```
+
+`npx cdk` rather than a bare `cdk`, to use the version pinned in this project's
+`devDependencies` rather than whatever is installed globally. A bare `cdk` works too if you did
+the global install above.
 
 Answer the prompt: `Do you wish to deploy these changes (y/n)? y`
 
@@ -406,9 +414,13 @@ Verified against AWS's own documentation and by running the project, not from me
 - **There was no clean-up section**, for a walkthrough that bootstraps an account and deploys a
   function.
 - **There was no `.gitignore`**, while the walkthrough tells you to create a CDK app inside this
-  repository. Following it produces `cdk.out`, `cdk.context.json` (which caches account ids and
-  availability zones) and compiled `.js`/`.d.ts` beside every source file, none of which were
-  ignored.
+  repository. Following it produces `cdk.out` and a compiled `.js`/`.d.ts` beside every source
+  file, none of which were ignored. Corrected after review: an earlier version of this list also
+  claimed the walkthrough produces `cdk.context.json`, and ignored that file. It does neither.
+  This app performs no context lookups so none is generated, and AWS is explicit that the file
+  **must** be committed when it does exist, since it is part of the application's state. It is
+  tracked now, with a note that its keys embed the account id and so are worth reading before
+  committing in a public repository.
 - **Three TODO comments** were published in the README, marking what a reader most needs: what
   the CDK is and why, the construct-level definitions, and what bootstrap and synth do. All
   three sections are now written.
