@@ -1,0 +1,48 @@
+# The repository had no .gitignore at all, and the walkthrough tells you to create the CDK
+# app inside this directory, so following it produces every one of the paths below with
+# nothing stopping them from being committed.
+
+# Synthesized cloud assemblies. cdk.out holds the generated CloudFormation templates and any
+# bundled Lambda assets, so it can contain whatever your stack embeds.
+cdk.out/
+*.d.ts
+!lambda/*.d.ts
+
+# Cached context lookups. cdk.context.json records the answers to environment queries: AWS
+# account ids, availability zones, AMI ids, hosted zone ids. It is the file most likely to
+# put an account number into a public repository by accident.
+cdk.context.json
+
+# Compiled output. A TypeScript CDK project emits .js and .d.ts beside every .ts source, so
+# without this the repository fills with build artifacts that shadow the real sources.
+*.js
+!jest.config.js
+*.js.map
+!projects/*/jest.config.js
+
+node_modules/
+
+# Credentials and secrets.
+.env
+.env.*
+.aws/
+credentials*
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Test and coverage output.
+coverage/
+.nyc_output/
+junit.xml
+
+# Editor and OS noise.
+.idea/
+.vscode/
+.DS_Store
+*.log
+*.sqlite
+*.db
+__pycache__/
