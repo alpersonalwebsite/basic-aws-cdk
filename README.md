@@ -78,8 +78,7 @@ Two things about that command, both from AWS's own CLI documentation:
   `npm config set prefix` in your home directory, not elevating the install.
 - **You can skip `-g` entirely.** Install `aws-cdk` as a project dev dependency and call it
   with `npx cdk`, which is what `projects/first_project` does. That pins the CLI per project
-  instead of having one global version for all of them. `npx cdk` falls back to the global
-  install if there is no local one.
+  instead of having one global version for all of them, so two projects can use two versions.
 
 > The previous version of these notes linked to the *AWS SDK for JavaScript v2* install page
 > here, which documents `npm install aws-sdk`. That is a different product, and that SDK
@@ -181,14 +180,16 @@ Taking the pinned CLI's own help as the authority, since it is what you run:
 > `--hotswap` Attempts to perform a 'hotswap' deployment, but **does not fall back to a full
 > deployment if that is not possible. Instead, changes to any non-hotswappable properties are
 > ignored.** Do not use this in production environments
-
+>
 > `--hotswap-fallback` Attempts to perform a 'hotswap' deployment, which skips CloudFormation
 > and updates the resources directly, and **falls back to a full deployment** if that is not
 > possible. Do not use this in production environments
 
-So the flag to reach for is almost always `--hotswap-fallback`. Plain `--hotswap` **silently
-ignores** anything it cannot hot swap, which means a change to a non-hotswappable property
-appears to deploy and does not, and that is the failure mode worth knowing about.
+So the flag to reach for is almost always `--hotswap-fallback`. Plain `--hotswap` **ignores**
+anything it cannot hot swap: it prints them (`non-hotswappable changes were found:`, naming the
+resource types it could not handle) but does not deploy them, so the command succeeds while your
+change is not live. Not silent, then, but easy to miss in a deploy that reports success, and that
+is the failure mode worth knowing about.
 
 `cdk watch` **implies `--hotswap`** per the same help, so it inherits that behaviour. Use
 `--no-hotswap` with it for full deployments.
@@ -416,11 +417,11 @@ Verified against AWS's own documentation and by running the project, not from me
 - **There was no `.gitignore`**, while the walkthrough tells you to create a CDK app inside this
   repository. Following it produces `cdk.out` and a compiled `.js`/`.d.ts` beside every source
   file, none of which were ignored. Corrected after review: an earlier version of this list also
-  claimed the walkthrough produces `cdk.context.json`, and ignored that file. It does neither.
-  This app performs no context lookups so none is generated, and AWS is explicit that the file
-  **must** be committed when it does exist, since it is part of the application's state. It is
-  tracked now, with a note that its keys embed the account id and so are worth reading before
-  committing in a public repository.
+  claimed the walkthrough produces `cdk.context.json`, and the `.gitignore` excluded that file.
+  Both were wrong. This app performs no context lookups, so none is generated, and AWS is explicit
+  that the file **must** be committed when a lookup does generate one, since it is part of the
+  application's state. The `.gitignore` no longer excludes it and explains when to commit one,
+  and why to read it first: its keys embed the account id.
 - **Three TODO comments** were published in the README, marking what a reader most needs: what
   the CDK is and why, the construct-level definitions, and what bootstrap and synth do. All
   three sections are now written.
