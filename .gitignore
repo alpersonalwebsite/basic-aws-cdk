@@ -1,0 +1,56 @@
+# The repository had no .gitignore at all, and the walkthrough tells you to create the CDK
+# app inside this directory, so following it produces every one of the paths below with
+# nothing stopping them from being committed.
+
+# Synthesized cloud assemblies. cdk.out holds the generated CloudFormation templates and any
+# bundled Lambda assets, so it can contain whatever your stack embeds.
+cdk.out/
+*.d.ts
+!lambda/*.d.ts
+
+# cdk.context.json is deliberately NOT ignored. AWS is explicit that it must be tracked:
+# "Because they're part of your application's state, cdk.json and cdk.context.json must be
+# committed to source control along with the rest of your app's source code. Otherwise,
+# deployments in other environments (for example, a CI pipeline) might produce inconsistent
+# results." It caches the answers to environment queries, which is what freezes an AMI id or
+# an availability-zone list so synthesis stays deterministic.
+#
+# Worth knowing before you commit one: its KEYS embed the account id, for example
+# availability-zones:account=123456789012:region=eu-central-1. So in a public repository,
+# read the file before committing it. This project generates none, because it performs no
+# context lookups.
+# https://docs.aws.amazon.com/cdk/v2/guide/context.html
+
+# Compiled output. A TypeScript CDK project emits .js and .d.ts beside every .ts source, so
+# without this the repository fills with build artifacts that shadow the real sources.
+*.js
+!jest.config.js
+*.js.map
+!projects/*/jest.config.js
+
+node_modules/
+
+# Credentials and secrets.
+.env
+.env.*
+.aws/
+credentials*
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Test and coverage output.
+coverage/
+.nyc_output/
+junit.xml
+
+# Editor and OS noise.
+.idea/
+.vscode/
+.DS_Store
+*.log
+*.sqlite
+*.db
+__pycache__/
