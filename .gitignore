@@ -53,6 +53,19 @@ secrets/
 *.p12
 *.pfx
 
+# SSH private keys, which none of the patterns above cover: an SSH key in its default
+# filename has no extension at all. `id_rsa*` alone is not enough either, because
+# ssh-keygen's default type is ed25519 now rather than rsa (man ssh-keygen: "ed25519
+# (the default)"), so id_ed25519 is the name a key generated today gets. This matters
+# here more than in most of these repositories: the walkthrough has you SSH to EC2.
+# Enumerated rather than globbed as `id_*`, which would also match ordinary sources.
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+*.ppk
+.ssh/
+
 # Test and coverage output.
 coverage/
 .nyc_output/
