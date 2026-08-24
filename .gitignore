@@ -31,8 +31,20 @@ cdk.out/
 node_modules/
 
 # Credentials and secrets.
-.env
-.env.*
+#
+# BOTH glob forms, because neither implies the other, and the earlier version of this file had
+# only one of them. `.env*` is a prefix glob: it catches .env, .env.local, and .envrc, which
+# direnv reads and which people put exported credentials in. `*.env` is a suffix glob, for
+# names like audit.env or production.env. What used to be here was `.env` plus `.env.*`, and
+# the dot is not cosmetic: `.env.*` requires a SECOND dot, so it never matched .envrc, and
+# nothing at all matched audit.env.
+#
+# The negation is the other half. `.env*` also matches .env.example, the one file in this
+# family you are meant to commit, so it is re-included explicitly. Order matters: a negation
+# has to follow the pattern it undoes, since the last matching rule wins.
+.env*
+*.env
+!.env.example
 .aws/
 credentials*
 secrets/
@@ -40,6 +52,19 @@ secrets/
 *.key
 *.p12
 *.pfx
+
+# SSH private keys, which none of the patterns above cover: an SSH key in its default
+# filename has no extension at all. `id_rsa*` alone is not enough either, because
+# ssh-keygen's default type is ed25519 now rather than rsa (man ssh-keygen: "ed25519
+# (the default)"), so id_ed25519 is the name a key generated today gets. This matters
+# here more than in most of these repositories: the walkthrough has you SSH to EC2.
+# Enumerated rather than globbed as `id_*`, which would also match ordinary sources.
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+*.ppk
+.ssh/
 
 # Test and coverage output.
 coverage/
@@ -51,6 +76,9 @@ junit.xml
 .vscode/
 .DS_Store
 *.log
+# Both sqlite spellings: the extension is a convention rather than a rule, and .sqlite3 is at
+# least as common as .sqlite.
 *.sqlite
+*.sqlite3
 *.db
 __pycache__/
